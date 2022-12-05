@@ -1,0 +1,14 @@
+{
+  "name": "advent-of-code-2022",
+  "version": "1.0.0",
+  "main": "noentrypoint",
+  "repository": "https://github.com/Denny966/advent-of-code-2022.git",
+  "author": "Denny966 <denny966@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ts-node": "^10.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.11"
+  }
+}
