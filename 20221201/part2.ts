@@ -1,6 +1,5 @@
 import fs from "fs";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
-var stream = fs.createWriteStream(__dirname + "/output.txt", { flags: "a" });
 
 const split = text.split("\r\n\r\n");
 

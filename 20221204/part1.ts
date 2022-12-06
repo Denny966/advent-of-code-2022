@@ -1,5 +1,5 @@
 import fs from "fs";
-import { range } from "./range";
+import { range } from "../lib/range";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
 
 const split = text.split("\r\n");

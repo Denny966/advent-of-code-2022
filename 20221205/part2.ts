@@ -1,24 +1,58 @@
 import fs from "fs";
-import { range } from "./range";
+import { chunk } from "../lib/chunk";
+import { range } from "../lib/range";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
 
 const split = text.split("\r\n");
 
-const rangePairs: { firstRange: number[]; secondRange: number[] }[] = [];
+const movements: { amount: number; from: string; to: string }[] = [];
+const rows: string[][] = [];
+
 split.forEach((row) => {
-    const pairs = row.split(",");
-    const firstPair = pairs[0].split("-");
-    const secondPair = pairs[1].split("-");
-
-    const firstRange = range(+firstPair[0], +firstPair[1]);
-    const secondRange = range(+secondPair[0], +secondPair[1]);
-
-    rangePairs.push({ firstRange, secondRange });
+    if (row.indexOf("move") > -1) {
+        const words = row.split(" ");
+        movements.push({ amount: +words[1], from: words[3], to: words[5] });
+    } else if (row.indexOf("[") > -1) {
+        const splitted = chunk<string>(row.split(""), 4).map((s) => s.join("").trim());
+        rows.push(splitted);
+    }
 });
 
-let result = 0;
-rangePairs.forEach((pair) => {
-    result += pair.firstRange.filter((r) => pair.secondRange.includes(r)).length > 0 || pair.secondRange.filter((r) => pair.firstRange.includes(r)).length > 0 ? 1 : 0;
+const maxLength = Math.max(...rows.map((el) => el.length));
+const stack: { [key: string]: string[] } = {};
+
+range(1, maxLength).forEach((col) => {
+    stack[col.toString()] = [];
 });
 
-console.log(result);
+rows.forEach((row) => {
+    row.forEach((column, index) => {
+        if (column !== "") {
+            stack[(index + 1).toString()].push(column);
+        }
+    });
+});
+
+Object.keys(stack).forEach((s) => {
+    stack[s].reverse();
+});
+
+const move = (from: string, to: string, amount: number) => {
+    const lastItems = stack[from].slice(-amount);
+    stack[from] = stack[from].slice(0, -amount);
+    lastItems.forEach((i) => stack[to].push(i));
+};
+
+movements.forEach((movement) => {
+    move(movement.from, movement.to, movement.amount);
+});
+
+console.log({ stack });
+const result: string[] = [];
+
+for (const [key, value] of Object.entries(stack)) {
+    const upperCrate = value.slice(-1)[0];
+    if (upperCrate != null) result.push(upperCrate);
+}
+console.log(stack);
+console.log(result.join("").replace(/\[/g, "").replace(/\]/g, ""));

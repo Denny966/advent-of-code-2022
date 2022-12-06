@@ -1,17 +1,11 @@
 import fs from "fs";
+import { chunk } from "../lib/chunk";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
-var stream = fs.createWriteStream(__dirname + "/output.txt", { flags: "a" });
 
 const split = text.split("\r\n");
 const points = (letter: string) => ("abcdefghijklmnopqrstuvwxyz" + "abcdefghijklmnopqrstuvwxyz".toUpperCase()).split("").indexOf(letter) + 1;
 
 const rucksacks: { part1: string; part2: string; part3: string; common: string[] }[] = [];
-
-const chunk = <T>(input: T[], size: number): T[][] => {
-    return input.reduce((arr, item, idx) => {
-        return idx % size === 0 ? [...arr, [item]] : [...arr.slice(0, -1), [...arr.slice(-1)[0], item]];
-    }, []);
-};
 
 const chunks = chunk<string>(split, 3);
 
