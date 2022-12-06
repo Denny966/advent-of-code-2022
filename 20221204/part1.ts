@@ -18,7 +18,7 @@ split.forEach((row) => {
 
 let result = 0;
 rangePairs.forEach((pair) => {
-    result += pair.firstRange.filter((r) => pair.secondRange.includes(r)).length > 0 || pair.secondRange.filter((r) => pair.firstRange.includes(r)).length > 0 ? 1 : 0;
+    result += pair.firstRange.every((r) => pair.secondRange.includes(r)) || pair.secondRange.every((r) => pair.firstRange.includes(r)) ? 1 : 0;
 });
 
 console.log(result);

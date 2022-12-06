@@ -1,14 +1,16 @@
 import fs from "fs";
+import { range } from "./range";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
-var stream = fs.createWriteStream(__dirname + "/output.txt", { flags: "a" });
 
-const split = text.split("\r\n\r\n");
+const split = text.split("\r\n");
 
-const sums = split.map((s) =>
-    s
-        .split("\r\n")
-        .map((n) => Number(n))
-        .reduce((sum, num) => sum + num, 0)
-);
+const movements: { amount: number; from: string; to: string }[] = [];
 
-console.log(Math.max.apply(Math, sums));
+split.forEach((row) => {
+    if (row.indexOf("move") > -1) {
+        const words = row.split(" ");
+        movements.push({ amount: +words[1], from: words[3], to: words[5] });
+    }
+});
+
+console.log(movements)
