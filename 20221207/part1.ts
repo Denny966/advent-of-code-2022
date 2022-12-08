@@ -1,101 +1,65 @@
 import fs from "fs";
-import { Tree, TreeNode } from "../lib/tree";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
-const stream = fs.createWriteStream(__dirname + "/output.txt", { flags: "a" });
 const data = text.split("\r\n");
 
-type File = { name: string; size: number };
-type Directory = { [key: string]: File | Directory };
+let currentDirectory = "";
 
-const root: Directory = {};
-
-const tree = new Tree("/");
-let currentDirectory = [];
+const directoryInfo = {};
 
 data.forEach((row) => {
-    const parts = row.split(" ");
+    if (row.trim() === "") return;
+
+    const parts = row.trim().split(" ");
     switch (parts[0]) {
         case "$": {
             if (parts[1] === "cd") {
-                if (parts[2] === "..") {
-                    currentDirectory.pop();
-
+                const dir = parts[2];
+                if (dir === "..") {
+                    console.log(currentDirectory);
+                    currentDirectory = currentDirectory.split("/").slice(0, -2).join("/") + "/";
+                } else if (dir === "/") {
+                    currentDirectory = "/";
                 } else {
-                    currentDirectory.push(parts[2]);
+                    currentDirectory = currentDirectory + dir + "/";
                 }
             }
             return;
         }
 
         case "dir": {
-            const value = parts[1];
-            if (!tree.insert(currentDirectory, value)) {
-                console.log(`failed to insert`)
+            const key = parts[1];
+            const dir = currentDirectory + key + "/";
+            if (!Object.keys(directoryInfo).includes(dir)) {
+                directoryInfo[dir] = {};
             }
             return;
         }
         default: {
-            if (!tree.insert(currentDirectory, parts[1], parts[0])) {
-                console.log(`failed to insert`)
-            }
+            const key = parts[1];
+            const value = parts[0];
+            directoryInfo[currentDirectory] = directoryInfo[currentDirectory] || {};
+            directoryInfo[currentDirectory][key] = value;
             return;
         }
     }
 });
 
-const directories = [...tree.nodes(tree.root, [])]
-    .map(x => {
-        return { key: x.key, value: x.value, parent: x.parent };
-    })
-    .filter((a) => a != null);
+const totalSizes = {};
+for (const [key, value] of Object.entries<{ [key: string]: string }>(directoryInfo)) {
+    for (const [key2, value2] of Object.entries<{ [key: string]: string }>(directoryInfo)) {
+        if (key2.indexOf(key) === 0) {
+            totalSizes[key] = [...(totalSizes[key] ?? []), ...Object.values(value2)];
+        }
+    }
+}
 
-    const directories2 = [...new Set(directories.map((d) => d.parent).filter((d) => d != null))];
-    console.log(directories2)
-// stream.write(JSON.stringify(directories2));
+//console.log(JSON.stringify(totalSizes));
 
- const d3 = directories2.map((d) => {
-     return { key: d, value: tree.nodes(tree.find(d, tree.root), []).reduce((sum, num) => sum + parseInt(num.value), 0) };
- });
-// stream.close();
-
- console.log(d3.filter(e=>e.value <= 100000).reduce((sum, num) => sum + num.value, 0));
-// const groups: { [key: string]: any[] } = directories.reduce(
-//     (groups, item) => ({
-//         ...groups,
-//         [item.parent]: [...(groups[item.parent] || []), item],
-//     }),
-//     {}
-// );
-//const kvp = groups.map((n) => ({ key: n.key, value: n.value.reduce((sum, num) => sum + parseInt(num), 0) }));
-
-// const result = {};
-// for (const [key, value] of Object.entries(groups)) {
-//     result[key] = value
-//         .map((c) => c.value)
-//         .filter((c) => c !== "~")
-//         .reduce((sum, num) => sum + parseInt(num), 0);
-// }
-
-// console.log(
-//     Object.values<any>(result)
-//         .filter((o) => o <= 100000)
-//         .reduce((sum, num) => sum + parseInt(num), 0)
-// );
-
-// console.log(
-//     [...tree.postOrderTraversal()]
-//         .map((x) => {
-//             if (x.key === x.value) {
-//                 return {
-//                     key: x.key,
-//                     value: [...tree.postOrderTraversal(x)]
-//                         .filter((x) => x.key !== x.value)
-//                         .map((n) => n.value)
-//                         .reduce((sum, num) => sum + parseInt(num), 0),
-//                 };
-//             }
-//         })
-//         .filter((a) => a != null)
-//         .filter((dir) => dir.value <= 100000)
-//         .reduce((sum, num) => sum + num.value, 0)
-// );
+const result = [];
+for (const [key, value] of Object.entries<string[]>(totalSizes)) {
+    const size = value.map((n) => parseInt(n)).reduce((sum, num) => sum + num, 0);
+    if (size <= 100000) {
+        result.push(size);
+    }
+}
+console.log(result.reduce((sum, num) => sum + num, 0));
