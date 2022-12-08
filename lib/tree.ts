@@ -1,75 +1,70 @@
-class TreeNode {
-    public key: any;
+export class TreeNode {
+    public key: string;
     public value: any;
-    public parent: any;
-    public children: any;
+    public parent: string;
+    public children: TreeNode[];
 
-    constructor(key, value = key, parent = null) {
+    constructor(key: string, value = key, parent = null) {
         this.key = key;
         this.value = value;
         this.parent = parent;
         this.children = [];
     }
-
-    get isLeaf() {
-        return this.children.length === 0;
-    }
-
-    get hasChildren() {
-        return !this.isLeaf;
-    }
 }
 
-class Tree {
-    public root: any;
+export class Tree {
+    public root: TreeNode;
 
-    constructor(key, value = key) {
+    constructor(key: string, value = key) {
         this.root = new TreeNode(key, value);
     }
 
-    *preOrderTraversal(node = this.root) {
-        yield node;
+    nodes = (node: TreeNode, children: TreeNode[]): TreeNode[] => {
         if (node.children.length) {
             for (let child of node.children) {
-                yield* this.preOrderTraversal(child);
+                this.nodes(child, children);
             }
+            return children;
+        } else {
+            if (node.key !== node.value) {
+                children.push(node);
+            }
+            return children;
         }
-    }
+    };
 
-    *postOrderTraversal(node = this.root) {
-        if (node.children.length) {
-            for (let child of node.children) {
-                yield* this.postOrderTraversal(child);
-            }
-        }
-        yield node;
-    }
-
-    insert(parentNodeKey, key, value = key) {
-        for (let node of this.preOrderTraversal()) {
-            if (node.key === parentNodeKey) {
-                node.children.push(new TreeNode(key, value, node));
-                return true;
-            }
+    insert = (parentNodeKey: string[], key: string, value = key) => {
+        const node = this.findInDirectory(parentNodeKey);
+        if (node != null) {
+            node.children.push(new TreeNode(key, value, node.key));
+            return true;
         }
         return false;
-    }
+    };
 
-    remove(key) {
-        for (let node of this.preOrderTraversal()) {
-            const filtered = node.children.filter((c) => c.key !== key);
-            if (filtered.length !== node.children.length) {
-                node.children = filtered;
-                return true;
-            }
+    find = (key: string, currentNode: TreeNode) => {
+        if (key === currentNode.key) {
+            return currentNode;
         }
-        return false;
-    }
-
-    find(key) {
-        for (let node of this.preOrderTraversal()) {
-            if (node.key === key) return node;
+        for (let index = 0; index < currentNode.children.length; index++) {
+            const element = currentNode.children[index];
+            const result = this.find(key, element);
+            if (result != null) {
+                return result;
+            }
         }
         return undefined;
-    }
+    };
+
+    findInDirectory = (directory: string[]) => {
+        let currentNode = this.root;
+        for (let index = 0; index < directory.length; index++) {
+            const path = directory[index];
+
+            currentNode = this.find(path, currentNode);
+            if (currentNode == null) return undefined;
+        }
+
+        return currentNode;
+    };
 }
