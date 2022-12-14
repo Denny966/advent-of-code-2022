@@ -45,11 +45,12 @@ const parseOperation = (operation: string, input: number) => {
 };
 
 const inspections: { [monkeyName: string]: number } = {};
+const lcd = monkeys.map((m) => m.test.divisible).reduce((acc, cur) => acc * cur, 1);
 
 range(1, rounds).forEach((round) => {
     monkeys.forEach((monkey) => {
         [...monkey.startingItems].forEach((startingItem) => {
-            const worryLevel = parseOperation(monkey.operation, startingItem);
+            const worryLevel = parseOperation(monkey.operation, startingItem) % lcd;
 
             if (worryLevel % monkey.test.divisible === 0) {
                 const trueMonkey = monkeys.find((m) => m.name.toLowerCase() === monkey.test.true.toLowerCase());
