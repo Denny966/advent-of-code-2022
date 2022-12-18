@@ -3,6 +3,9 @@ export interface Coord {
     y: number;
 }
 
+
+export type Point = [number, number]
+
 export interface MatrixValue<T> {
     rowIndex: number;
     columnIndex: number;

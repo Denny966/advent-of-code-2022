@@ -1,118 +1,56 @@
 import fs from "fs";
-import { Coord, getSides, MatrixValue } from "../lib/matrix";
-import { range } from "../lib/range";
+import { getSides, Point } from "../lib/matrix";
 const text = fs.readFileSync(__dirname + "/input.txt", "utf-8");
 const data = text.split("\r\n").filter((s) => !s.startsWith("//"));
+const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 
-const alphabet = "SabcdefghijklmnopqrstuvwxyzE".split("");
-const visited: { [name: string]: boolean } = {};
-
-const isAvailable = (from: string, to: string) => {
-    if (!to || alphabet.indexOf(to) === -1) return false;
-
-    return [0, 1].includes(alphabet.indexOf(to) - alphabet.indexOf(from));
-};
 const matrix: [string[]] = [[]];
-let allMarks: { [name: string]: string[] } = {};
-
-function Graph(marks: string[]) {
-    marks.forEach((cave) => {
-        allMarks[cave] = [];
-    });
-}
-
-function addEdge(fromMark: string, toMark: string) {
-    const marks: string[] = allMarks[fromMark];
-    if (!marks.some((c) => c === toMark)) {
-        marks.push(toMark);
-    }
-}
-
-let marks: string[] = [];
 
 data.forEach((row: string, rowIndex) => {
     matrix[rowIndex] = row.split("").map((letter) => letter);
-    marks.push(...row.split("").map((_, index) => `${rowIndex}-${index}`));
 });
 
-Graph(marks);
+const isAvailable = (from: Point, to: Point) => {
+    if (!to || matrix[to[0]]?.[to[1]] == null) return false;
 
-data.forEach((row: string, rowIndex) => {
-    row.split("").forEach((letter, columnIndex) => {
-        const { bottom, left, right, top } = getSides(matrix, rowIndex, columnIndex);
+    let fromValue = matrix[from[0]][from[1]];
+    let toValue = matrix[to[0]][to[1]];
 
-        [top, left, bottom, right]
-            .filter((v) => v.value != null)
-            .forEach((elem) => {
-                if (isAvailable(letter, elem.value)) {
-                    addEdge(`${rowIndex}-${columnIndex}`, `${elem.rowIndex}-${elem.columnIndex}`);
-                }
-            });
-    });
-});
+    return alphabet.indexOf(toValue === "E" ? "z" : toValue) - alphabet.indexOf(fromValue === "S" ? "a" : fromValue) <= 1;
+};
 
-const findPosition = (letter: string): Coord => {
+const findPosition = (letter: string): Point | undefined => {
     for (let rowIndex = 0; rowIndex < matrix.length; rowIndex++) {
         const row = matrix[rowIndex];
         for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
             const element = row[columnIndex];
             if (element === letter) {
-                return { x: columnIndex, y: rowIndex };
+                return [rowIndex, columnIndex];
             }
         }
     }
 };
 
-// const print = (path: MatrixValue<Mark>[]) => {
-//     console.log(`################ ${path.length} #################`);
-//     for (let rowIndex = 0; rowIndex < matrix.length; rowIndex++) {
-//         const row = matrix[rowIndex];
-
-//         console.log(
-//             row
-//                 .map((r, columnIndex) => {
-//                     if (path.some((p) => p.rowIndex === rowIndex && p.columnIndex === columnIndex)) {
-//                         return `[${r.letter}]`;
-//                     } else {
-//                         return ` ${r.letter} `;
-//                     }
-//                 })
-//                 .join("")
-//         );
-//     }
-// };
-
 const start = findPosition("S");
 const end = findPosition("E");
 
-const path: string[] = [];
-const allPaths: string[][] = [];
-
-const navigate = (rowIndex: number, columnIndex: number) => {
-    //const { top, bottom, left, right } = getSides(matrix, rowIndex, columnIndex);
-    const nextMarks = allMarks[`${rowIndex}-${columnIndex}`];
-    const current = matrix[rowIndex]?.[columnIndex];
-    if (current == null) {
-        return;
-    }
-    nextMarks.forEach((name) => {
-        //const name = `${elem.rowIndex}-${elem.columnIndex}`;
-        const [y, x] = name.split("-");
-        const value = matrix[parseInt(y)][parseInt(x)];
-        const $isAvailable = isAvailable(current, value);
-        if ($isAvailable && name === `${end.y}-${end.x}`) {
-            allPaths.push([...path]);
-        } else if ($isAvailable && !visited[name]) {
-            visited[name] = true;
-            path.push(name);
-            navigate(parseInt(y), parseInt(x));
-            path.pop();
-            visited[name] = false;
+const navigate = () => {
+    let queue: [Point, number][] = [[start, 0]];
+    const visited: Set<string> = new Set();
+    while (queue.length) {
+        const [currentPoint, steps] = queue.shift();
+        if (visited.has(currentPoint.toString())) {
+            continue;
         }
-    });
+        visited.add(currentPoint.toString());
+        if (currentPoint.toString() === end.toString()) {
+            return steps;
+        }
+        const { top, bottom, left, right } = getSides(matrix, currentPoint[0], currentPoint[1]);
+        const possibleValues: Point[] = [top, bottom, right, left].filter((point) => isAvailable(currentPoint, [point.rowIndex, point.columnIndex])).map((p) => [p.rowIndex, p.columnIndex]);
+        queue = queue.concat(possibleValues.map((p) => [p, steps + 1]));
+    }
+    return "Shortest path not found";
 };
 
-navigate(start.y, start.x);
-//console.log(totalPath.map((p) => p.value));
-//allPaths.forEach(element => print(element));
-console.log(allPaths.map((p) => p.length).sort((a, b) => a - b));
+console.log(navigate());
