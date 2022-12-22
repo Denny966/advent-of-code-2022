@@ -61,24 +61,11 @@ for (let index = 0; index < data.length; index++) {
     list.push(...[left, right]);
 }
 
-export function bubbleSort(array: string[]): string[] {
-    array = array.slice();
+list.sort((a, b) => {
+    return isRightOrder(a, b) ? -1 : 1;
+})
 
-    for (let i = 0; i < array.length; i++) {
-        for (let j = 0; j < array.length - 1; j++) {
 
-            if (!isRightOrder(array[j], array[j + 1])) {
-                let swap = array[j];
-                array[j] = array[j + 1];
-                array[j + 1] = swap;
-            }
-        }
-    }
-    return array;
-}
-
-const sortedList = bubbleSort(list);
-
-const packageTwo = sortedList.indexOf("[[2]]") + 1;
-const packageSix = sortedList.indexOf("[[6]]") + 1;
+const packageTwo = list.indexOf("[[2]]") + 1;
+const packageSix = list.indexOf("[[6]]") + 1;
 console.log(packageTwo * packageSix);
